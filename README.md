@@ -29,7 +29,7 @@ var outputDir = './training-data-compressed';
 var saveFilesAs = '.txt';
 var filesToCompress = ['.docx', '.pdf'];
 
-compressFilesToPath(inputDir, outputDir, saveFilesAs, filesToCompress, function (err) {
+TrainingDataCompressor.compressFilesToPath(inputDir, outputDir, saveFilesAs, filesToCompress, function (err) {
     if (err) console.log(err);
 
     console.log('done compressing files');
@@ -41,9 +41,9 @@ The files that have been compressed, as seen in the example above, can also be d
 
 ``` javascript
 var TrainingDataCompressor = require('training-data-compressor');
-var inputDir = './training-data-compressed';
+var outputDir = './training-data-compressed';
 
-TrainingDataCompressor.decompressFilesFromPath(inputDir, function (err) {
+TrainingDataCompressor.decompressFilesFromPath(outputDir, function (err) {
     if (err) console.log(err);
 
     console.log('done decompressing files');
