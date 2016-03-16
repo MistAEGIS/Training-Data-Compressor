@@ -1,0 +1,22 @@
+{
+  "name": "training-data-compressor",
+  "version": "0.0.1",
+  "description": "Extracts text from documents and compresses them",
+  "main": "index.js",
+  "author": "atracaelus@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "directory-structure-json": "0.0.2",
+    "mkdirp": "^0.5.1",
+    "path": "^0.12.7",
+    "textract": "^1.2.1"
+  },
+  "scripts": {
+    "test": "true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MistAEGIS/Training-Data-Compressor.git"
+  },
+  "homepage": "https://github.com/MistAEGIS/Training-Data-Compressor#readme"
+}
