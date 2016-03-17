@@ -11,7 +11,8 @@ This module exposes functions with which you can:
 
 ## Motive
 Training data can take up alot of space, especially if your data depends on Word and PDF files.
-By preprocessing these files through compression and text extraction, you can solve this issue.
+If you only need the raw text from these documents to train and not the styling/markup, you can preprocess your documents.
+By preprocessing these files through compression and text extraction, you can save alot of space.
 
 ## Formats that can be extracted and compressed
 This module uses [textract](https://github.com/dbashford/textract) under the hood, and therefore can only compress files that textract supports.
@@ -38,12 +39,14 @@ TrainingDataCompressor.compressFilesToPath(inputDir, outputDir, saveFilesAs, fil
 
 ## Decompress documents in folder
 The files that have been compressed, as seen in the example above, can also be decompressed.
+Note that the function will delete the compressed files in the `outputDir`.
 
 ``` javascript
 var TrainingDataCompressor = require('training-data-compressor');
-var outputDir = './training-data-compressed';
+var inputDir = './training-data-compressed';
+var outputDir = './training-data-decompressed';
 
-TrainingDataCompressor.decompressFilesFromPath(outputDir, function (err) {
+TrainingDataCompressor.decompressFilesFromPath(inputDir, outputDir, function (err) {
     if (err) console.log(err);
 
     console.log('done decompressing files');
