@@ -9,8 +9,8 @@ var fstream = require('fstream');
 var rimraf = require('rimraf');
 
 // module functions
-function decompressFilesFromPath (tarredDir, outputDir, callback) {
-    unpackFolder(tarredDir, function (err, inputDir) {
+function decompressFilesFromPath (zippedDir, outputDir, callback) {
+    unpackFolder(zippedDir, function (err, inputDir) {
         if (err) return callback(err);
 
         DirectoryStructureJSON.getStructure(inputDir, function (err, structure, total) {
@@ -140,7 +140,10 @@ function compressFilesToPath (inputDir, outputDir, saveAs, allowedExtensions, ca
 
 // helper functions
 function compressFile (filePath, deleteOriginal, callback) {
-    var gzip = zlib.createGzip();
+    var gzip = zlib.createGzip({
+        level: 9,
+        memLevel: 9
+    });
     var inp = fs.createReadStream(filePath);
     var out = fs.createWriteStream(filePath + '.gz');
     var stream = inp.pipe(gzip).pipe(out);
@@ -205,7 +208,9 @@ function packFolder (inputDir, callback) {
         return callback(err);
     })
     .on('end', function () {
-        return callback(null, inputDir + '.tar');
+        compressFile(inputDir + '.tar', true, function () {
+            return callback(null, inputDir + '.tar.gz');
+        });
     });
 
     fstream.Reader({ path: inputDir, type: "Directory" })
@@ -216,20 +221,24 @@ function packFolder (inputDir, callback) {
     .pipe(fs.createWriteStream(inputDir + '.tar'))
 }
 
-function unpackFolder (tarredDir, callback) {
-    var extractor = tar.Extract({path: path.dirname(tarredDir)})
-    .on('error', function (err) {
-        return callback(err);
-    })
-    .on('end', function () {
-        return callback(null, tarredDir.replace('.tar', ''));
-    });
+function unpackFolder (zippedDir, callback) {
+    decompressFile(zippedDir, false, function () {
+        var extractor = tar.Extract({path: path.dirname(zippedDir)})
+        .on('error', function (err) {
+            return callback(err);
+        })
+        .on('end', function () {
+            fs.unlink(zippedDir.replace('.gz', ''), function () {
+                return callback(null, zippedDir.replace('.tar.gz', ''));
+            });
+        });
 
-    fs.createReadStream(tarredDir)
-    .on('error', function (err) {
-        return callback(err);
-    })
-    .pipe(extractor);
+        fs.createReadStream(zippedDir.replace('.gz', ''))
+        .on('error', function (err) {
+            return callback(err);
+        })
+        .pipe(extractor);
+    });
 }
 
 module.exports.decompressFilesFromPath = decompressFilesFromPath;

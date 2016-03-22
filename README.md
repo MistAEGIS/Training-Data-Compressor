@@ -1,7 +1,7 @@
 Training Data Compressor
 ========================
 
-This module will compress/decompress documents in a folder by extracting their text and gzipping them all individually. Afterwards the folder is tarred. The module exposes functions with which you can:
+This module will compress/decompress documents in a folder by extracting their text and gzipping them all individually. Afterwards the folder is tarred and gzipped. The module exposes functions with which you can:
 
 * Compress documents (`pdf`, `docx`, etc.) by extracting the raw text of them and gzipping them.
 * Decompress the same gzipped raw text documents, so they can be used by your machine learning algorithm
@@ -21,8 +21,9 @@ Also note that certain filetypes have [certain requirements](https://github.com/
 
 
 ## Compress documents in folder
+Note that the following scripts are memory intensive and will take a while to finish if you work with large amounts of files.
 This will extract the contents of documents and compresses them into `.gz` files.
-The `outputDir` will be tarred.
+The `outputDir` will be tarred and gzipped.
 
 ``` javascript
 var TrainingDataCompressor = require('training-data-compressor');
@@ -34,7 +35,7 @@ var filesToCompress = ['.docx', '.pdf'];
 TrainingDataCompressor.compressFilesToPath(inputDir, outputDir, saveFilesAs, filesToCompress, function (err) {
     if (err) console.log(err);
 
-    console.log('done compressing files, files are compressed at: ', outputDir + '.tar');
+    console.log('done compressing files, files are compressed at: ', outputDir + '.tar.gz');
 });
 ```
 
@@ -43,10 +44,10 @@ The files that have been compressed, as seen in the example above, can also be d
 
 ``` javascript
 var TrainingDataCompressor = require('training-data-compressor');
-var tarredDir = './training-data-compressed.tar';
+var zippedDir = './training-data-compressed.tar.gz';
 var outputDir = './training-data-decompressed';
 
-TrainingDataCompressor.decompressFilesFromPath(tarredDir, outputDir, function (err) {
+TrainingDataCompressor.decompressFilesFromPath(zippedDir, outputDir, function (err) {
     if (err) console.log(err);
 
     console.log('done decompressing files at: ', outputDir);
