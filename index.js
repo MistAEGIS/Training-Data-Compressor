@@ -4,38 +4,50 @@ var mkdirp = require('mkdirp');
 var textract = require('textract');
 var DirectoryStructureJSON = require('directory-structure-json');
 var zlib = require('zlib');
+var tar = require('tar');
+var fstream = require('fstream');
+var rimraf = require('rimraf');
 
 // module functions
-function decompressFilesFromPath (inputDir, outputDir, callback) {
-    DirectoryStructureJSON.getStructure(inputDir, function (err, structure, total) {
+function decompressFilesFromPath (tarredDir, outputDir, callback) {
+    unpackFolder(tarredDir, function (err, inputDir) {
         if (err) return callback(err);
 
-        var filesRemaining = total.files;
+        DirectoryStructureJSON.getStructure(inputDir, function (err, structure, total) {
+            if (err) return callback(err);
 
-        DirectoryStructureJSON.traverseStructure(structure, inputDir,
-        function (folder, location) {},
-        function (file, location) {
-            var extension = path.extname(file.name);
+            var filesRemaining = total.files;
 
-            if (extension !== '.gz') {
-                --filesRemaining;
-                if (!filesRemaining) callback();
-                return;
-            }
+            DirectoryStructureJSON.traverseStructure(structure, inputDir,
+            function (folder, location) {},
+            function (file, location) {
+                var extension = path.extname(file.name);
 
-            var oldFilepath = location + '/' + file.name;
-            var newFilePath = oldFilepath.replace(inputDir, outputDir);
-            var newDir = path.dirname(newFilePath);
+                if (extension !== '.gz') {
+                    --filesRemaining;
+                    if (!filesRemaining) callback();
+                    return;
+                }
 
-            createFolders(newDir, function (err) {
-                if (err) return callback(err);
+                var oldFilepath = location + '/' + file.name;
+                var newFilePath = oldFilepath.replace(inputDir, outputDir);
+                var newDir = path.dirname(newFilePath);
 
-                copyFile(oldFilepath, newFilePath, function (err) {
+                createFolders(newDir, function (err) {
                     if (err) return callback(err);
 
-                    decompressFile(newFilePath, true, function () {
-                        --filesRemaining;
-                        if (!filesRemaining) return callback();
+                    copyFile(oldFilepath, newFilePath, function (err) {
+                        if (err) return callback(err);
+
+                        decompressFile(newFilePath, true, function () {
+                            --filesRemaining;
+                            if (!filesRemaining) {
+                                rimraf(inputDir, fs, function (err) {
+                                    if (err) return callback(err);
+                                    return callback();
+                                });
+                            }
+                        });
                     });
                 });
             });
@@ -74,20 +86,33 @@ function compressFilesToPath (inputDir, outputDir, saveAs, allowedExtensions, ca
             createFolders(newDir, function (err) {
                 if (err) return callback(err);
 
+                // handle plain text files
                 if (!extension && saveAs) {
                     return fs.readFile(oldFilepath, 'utf-8', function (err, text) {
                         if (err) return callback(err);
 
                         fs.writeFile(newFilePath, text, function (err) {
                             if (err) return callback(err);
+
                             compressFile(newFilePath, true, function () {
                                 --filesRemaining;
-                                if (!filesRemaining) return callback();
+
+                                if (!filesRemaining) {
+                                    packFolder(outputDir, function (err) {
+                                        if (err) return callback(err);
+
+                                        rimraf(outputDir, fs, function (err) {
+                                            if (err) return callback(err);
+                                            return callback(); 
+                                        });
+                                    });
+                                }
                             });
                         });
                     });
                 }
 
+                // handle other formats
                 textract.fromFileWithPath(oldFilepath, function (err, text) {
                     if (err) return callback(err);
 
@@ -95,7 +120,16 @@ function compressFilesToPath (inputDir, outputDir, saveAs, allowedExtensions, ca
                         if (err) return callback(err);
                         compressFile(newFilePath, true, function () {
                             --filesRemaining;
-                            if (!filesRemaining) return callback();
+                            if (!filesRemaining) {
+                                packFolder(outputDir, function (err) {
+                                    if (err) return callback(err);
+
+                                    rimraf(outputDir, fs, function (err) {
+                                        if (err) return callback(err);
+                                        return callback(); 
+                                    });
+                                });
+                            }
                         });
                     });
                 });
@@ -163,6 +197,39 @@ function copyFile (source, target, callback) {
             callbackCalled = true;
         }
     }
+}
+
+function packFolder (inputDir, callback) {
+    var packer = tar.Pack({ noProprietary: true })
+    .on('error', function (err) {
+        return callback(err);
+    })
+    .on('end', function () {
+        return callback(null, inputDir + '.tar');
+    });
+
+    fstream.Reader({ path: inputDir, type: "Directory" })
+    .on('error', function (err) {
+        return callback(err);
+    })
+    .pipe(packer)
+    .pipe(fs.createWriteStream(inputDir + '.tar'))
+}
+
+function unpackFolder (tarredDir, callback) {
+    var extractor = tar.Extract({path: path.dirname(tarredDir)})
+    .on('error', function (err) {
+        return callback(err);
+    })
+    .on('end', function () {
+        return callback(null, tarredDir.replace('.tar', ''));
+    });
+
+    fs.createReadStream(tarredDir)
+    .on('error', function (err) {
+        return callback(err);
+    })
+    .pipe(extractor);
 }
 
 module.exports.decompressFilesFromPath = decompressFilesFromPath;

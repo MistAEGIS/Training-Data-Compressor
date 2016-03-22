@@ -1,7 +1,7 @@
 Training Data Compressor
 ========================
 
-This module exposes functions with which you can:
+This module will compress/decompress documents in a folder by extracting their text and gzipping them all individually. Afterwards the folder is tarred. The module exposes functions with which you can:
 
 * Compress documents (`pdf`, `docx`, etc.) by extracting the raw text of them and gzipping them.
 * Decompress the same gzipped raw text documents, so they can be used by your machine learning algorithm
@@ -22,6 +22,7 @@ Also note that certain filetypes have [certain requirements](https://github.com/
 
 ## Compress documents in folder
 This will extract the contents of documents and compresses them into `.gz` files.
+The `outputDir` will be tarred.
 
 ``` javascript
 var TrainingDataCompressor = require('training-data-compressor');
@@ -33,22 +34,21 @@ var filesToCompress = ['.docx', '.pdf'];
 TrainingDataCompressor.compressFilesToPath(inputDir, outputDir, saveFilesAs, filesToCompress, function (err) {
     if (err) console.log(err);
 
-    console.log('done compressing files');
+    console.log('done compressing files, files are compressed at: ', outputDir + '.tar');
 });
 ```
 
 ## Decompress documents in folder
 The files that have been compressed, as seen in the example above, can also be decompressed.
-Note that the function will delete the compressed files in the `outputDir`.
 
 ``` javascript
 var TrainingDataCompressor = require('training-data-compressor');
-var inputDir = './training-data-compressed';
+var tarredDir = './training-data-compressed.tar';
 var outputDir = './training-data-decompressed';
 
-TrainingDataCompressor.decompressFilesFromPath(inputDir, outputDir, function (err) {
+TrainingDataCompressor.decompressFilesFromPath(tarredDir, outputDir, function (err) {
     if (err) console.log(err);
 
-    console.log('done decompressing files');
+    console.log('done decompressing files at: ', outputDir);
 });
 ```

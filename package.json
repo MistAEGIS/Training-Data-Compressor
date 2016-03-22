@@ -1,14 +1,17 @@
 {
   "name": "training-data-compressor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Extracts text from documents and compresses them",
   "main": "index.js",
   "author": "atracaelus@gmail.com",
   "license": "ISC",
   "dependencies": {
     "directory-structure-json": "0.0.2",
+    "fstream": "^1.0.8",
     "mkdirp": "^0.5.1",
     "path": "^0.12.7",
+    "rimraf": "^2.5.2",
+    "tar": "^2.2.1",
     "textract": "^1.2.1"
   },
   "scripts": {
